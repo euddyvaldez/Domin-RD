@@ -153,12 +153,12 @@ export const Lobby: React.FC = () => {
             </div>
             {!isConnected && (
               <span className="text-[9px] text-orange-500 font-bold animate-pulse tracking-tight">
-                RECONECTANDO...
+                CONECTANDO AL SERVIDOR...
               </span>
             )}
             {isConnected && (
               <span className="text-[9px] text-green-500 font-bold opacity-50 tracking-tight">
-                EN LÍNEA
+                SERVIDOR LISTO
               </span>
             )}
           </div>

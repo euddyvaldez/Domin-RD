@@ -49,7 +49,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
-      transports: ['polling', 'websocket'] // Polling first is often more reliable behind proxies
+      transports: ['websocket'] // WebSocket only is safer for Cloud Run (no session affinity issues)
     });
     
     socket.on('connect', () => {

@@ -23,7 +23,7 @@ async function startServer() {
       credentials: true
     },
     allowEIO3: true,
-    transports: ['polling', 'websocket'], // Polling first is safer for establishing connection behind proxies
+    transports: ['websocket'], // WebSocket only is safer for Cloud Run (no session affinity issues)
     pingTimeout: 60000,
     pingInterval: 25000
   });

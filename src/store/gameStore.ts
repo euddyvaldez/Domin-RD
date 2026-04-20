@@ -33,18 +33,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setPlayerName: (name) => set({ playerName: name }),
 
   connect: (playerName) => {
-    if (get().socket) return;
+    if (get().socket?.connected) return;
+    
+    // Clean up old socket if it exists but is disconnected
+    if (get().socket) {
+      get().socket?.close();
+    }
     
     console.log('Initiating connection to server...');
     
-    // Explicitly determine origin for robustness
-    const socketUrl = window.location.origin;
-    
-    const socket = io(socketUrl, {
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
+    // Use default io() which handles path/origin automatically
+    const socket = io({
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
       timeout: 20000,
-      transports: ['polling', 'websocket'] // Ensure polling as fallback
+      transports: ['polling', 'websocket'] // Polling first is often more reliable behind proxies
     });
     
     socket.on('connect', () => {

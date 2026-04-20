@@ -18,10 +18,14 @@ async function startServer() {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: '*',
-      methods: ["GET", "POST"]
+      origin: true, // Allow all origins explicitly for flexibility
+      methods: ["GET", "POST"],
+      credentials: true
     },
-    transports: ['websocket', 'polling']
+    allowEIO3: true,
+    transports: ['polling', 'websocket'], // Polling first is safer for establishing connection behind proxies
+    pingTimeout: 60000,
+    pingInterval: 25000
   });
 
   const rooms = new Map();

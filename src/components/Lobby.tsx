@@ -16,23 +16,17 @@ export const Lobby: React.FC = () => {
   const [playersCount, setPlayersCount] = useState<2 | 3 | 4>(4);
   const [mode, setMode] = useState<'individual' | 'pairs'>('individual');
 
-  const [showRetry, setShowRetry] = useState(false);
+  // Conectar al montar el componente para "despertar" al servidor
+  React.useEffect(() => {
+    connect('');
+  }, []);
 
   const handleConnect = () => {
     if (!name) return;
     setPlayerName(name);
+    setHasJoined(true);
     connect(name);
-    // Show retry after 8 seconds
-    setTimeout(() => {
-      setShowRetry(true);
-    }, 8000);
   };
-
-  React.useEffect(() => {
-    if (isConnected && !hasJoined && playerName) {
-      setHasJoined(true);
-    }
-  }, [isConnected, hasJoined, playerName]);
 
   const handleJoin = (id: string) => {
     if (!id) return;
@@ -48,7 +42,7 @@ export const Lobby: React.FC = () => {
     setIsCreatingRoom(false);
   };
 
-  if (!hasJoined || !isConnected) {
+  if (!hasJoined) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-green-900 p-4">
         <motion.div 
@@ -102,40 +96,17 @@ export const Lobby: React.FC = () => {
               placeholder="Tu nombre"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition-colors text-black"
             />
             <button
               onClick={handleConnect}
-              disabled={!name || (socket !== null && !isConnected && !showRetry)}
+              disabled={!name}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {socket !== null && !isConnected ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  Conectando...
-                </>
-              ) : (
-                <>
-                  <Play size={20} />
-                  Entrar al Lobby
-                </>
-              )}
+              <Play size={20} />
+              Entrar al Lobby
             </button>
-            {socket !== null && !isConnected && (
-              <div className="space-y-2">
-                <p className="text-xs text-red-500 font-medium">
-                  Intentando conectar con el servidor...
-                </p>
-                {showRetry && (
-                  <button 
-                    onClick={() => window.location.reload()}
-                    className="text-xs text-green-600 hover:underline font-bold"
-                  >
-                    ¿Tarda demasiado? Haz clic aquí para recargar
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         </motion.div>
       </div>
@@ -175,9 +146,21 @@ export const Lobby: React.FC = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-800">Salas</h2>
           </div>
-          <div className="flex items-center gap-2 text-green-600 font-medium">
-            <Users size={18} />
-            <span>{playerName}</span>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2 text-green-600 font-medium">
+              <Users size={18} />
+              <span>{playerName}</span>
+            </div>
+            {!isConnected && (
+              <span className="text-[9px] text-orange-500 font-bold animate-pulse tracking-tight">
+                RECONECTANDO...
+              </span>
+            )}
+            {isConnected && (
+              <span className="text-[9px] text-green-500 font-bold opacity-50 tracking-tight">
+                EN LÍNEA
+              </span>
+            )}
           </div>
         </div>
 

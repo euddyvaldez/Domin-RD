@@ -13,16 +13,40 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const httpServer = createServer(app);
+  
+  console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode...`);
+
   const io = new Server(httpServer, {
     cors: {
       origin: '*',
+      methods: ["GET", "POST"]
     },
+    transports: ['websocket', 'polling']
   });
 
   const rooms = new Map();
 
+  // Health check for troubleshooting
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      players: Array.from(rooms.values()).reduce((sum, r) => sum + r.players.length, 0),
+      rooms: rooms.size,
+      uptime: process.uptime()
+    });
+  });
+
+  // Log socket requests for debugging
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/socket.io/')) {
+      console.log(`[Socket.io Request] ${req.method} ${req.url}`);
+    }
+    next();
+  });
+
   io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
+    socket.emit('connection_acknowledged', { id: socket.id });
 
     socket.on('create_room', (settings) => {
       const roomId = Math.random().toString(36).substring(7);
@@ -439,9 +463,26 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    // In production, serve from dist
     const distPath = path.resolve(__dirname, 'dist');
-    app.use(express.static(distPath));
+    // Ensure the path exists or use a fallback
+    console.log(`Serving static files from: ${distPath}`);
+    
+    app.use(express.static(distPath, {
+      maxAge: '1d',
+      index: false
+    }));
+
+    // Monitor routing in production
+    app.use((req, res, next) => {
+      console.log(`[Request] ${req.method} ${req.url}`);
+      next();
+    });
+
     app.get('*', (req, res) => {
+      // Don't intercept socket.io requests
+      if (req.url.startsWith('/socket.io/')) return;
+      
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
   }

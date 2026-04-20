@@ -16,10 +16,16 @@ export const Lobby: React.FC = () => {
   const [playersCount, setPlayersCount] = useState<2 | 3 | 4>(4);
   const [mode, setMode] = useState<'individual' | 'pairs'>('individual');
 
+  const [showRetry, setShowRetry] = useState(false);
+
   const handleConnect = () => {
     if (!name) return;
     setPlayerName(name);
     connect(name);
+    // Show retry after 8 seconds
+    setTimeout(() => {
+      setShowRetry(true);
+    }, 8000);
   };
 
   React.useEffect(() => {
@@ -100,7 +106,7 @@ export const Lobby: React.FC = () => {
             />
             <button
               onClick={handleConnect}
-              disabled={!name || (socket !== null && !isConnected)}
+              disabled={!name || (socket !== null && !isConnected && !showRetry)}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {socket !== null && !isConnected ? (
@@ -116,9 +122,19 @@ export const Lobby: React.FC = () => {
               )}
             </button>
             {socket !== null && !isConnected && (
-              <p className="text-xs text-red-500 mt-2 font-medium">
-                Intentando conectar con el servidor...
-              </p>
+              <div className="space-y-2">
+                <p className="text-xs text-red-500 font-medium">
+                  Intentando conectar con el servidor...
+                </p>
+                {showRetry && (
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="text-xs text-green-600 hover:underline font-bold"
+                  >
+                    ¿Tarda demasiado? Haz clic aquí para recargar
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </motion.div>

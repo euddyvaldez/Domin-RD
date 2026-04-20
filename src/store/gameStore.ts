@@ -34,23 +34,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   connect: (playerName) => {
     if (get().socket) return;
-
-    const socket = io({
-      reconnectionAttempts: 5,
-      timeout: 10000,
+    
+    console.log('Initiating connection to server...');
+    
+    // Explicitly determine origin for robustness
+    const socketUrl = window.location.origin;
+    
+    const socket = io(socketUrl, {
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 20000,
+      transports: ['polling', 'websocket'] // Ensure polling as fallback
     });
     
     socket.on('connect', () => {
-      console.log('Connected to server');
+      console.log('Socket.io connected successfully:', socket.id);
+      set({ isConnected: true });
+    });
+
+    socket.on('connection_acknowledged', (data) => {
+      console.log('Server acknowledged connection:', data);
       set({ isConnected: true });
     });
 
     socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+      console.error('Socket.io connection error:', error.message);
       set({ isConnected: false });
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
+      console.log('Socket.io disconnected:', reason);
       set({ isConnected: false });
     });
 

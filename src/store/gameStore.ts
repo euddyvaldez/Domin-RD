@@ -33,10 +33,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setPlayerName: (name) => set({ playerName: name }),
 
   connect: (playerName) => {
-    const socket = io();
+    if (get().socket) return;
+
+    const socket = io({
+      reconnectionAttempts: 5,
+      timeout: 10000,
+    });
     
     socket.on('connect', () => {
+      console.log('Connected to server');
       set({ isConnected: true });
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      set({ isConnected: false });
+    });
+
+    socket.on('disconnect', () => {
+      set({ isConnected: false });
     });
 
     socket.on('room_update', (room) => {

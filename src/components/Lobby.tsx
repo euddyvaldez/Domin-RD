@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Users, Play, Plus, LogIn, X, Trophy, User } from 'lucide-react';
 
 export const Lobby: React.FC = () => {
-  const { connect, joinRoom, createRoom, setPlayerName, playerName, isConnected } = useGameStore();
+  const { socket, connect, joinRoom, createRoom, setPlayerName, playerName, isConnected } = useGameStore();
   const [roomId, setRoomId] = useState('');
   const [name, setName] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
@@ -20,8 +20,13 @@ export const Lobby: React.FC = () => {
     if (!name) return;
     setPlayerName(name);
     connect(name);
-    setHasJoined(true);
   };
+
+  React.useEffect(() => {
+    if (isConnected && !hasJoined && playerName) {
+      setHasJoined(true);
+    }
+  }, [isConnected, hasJoined, playerName]);
 
   const handleJoin = (id: string) => {
     if (!id) return;
@@ -37,7 +42,7 @@ export const Lobby: React.FC = () => {
     setIsCreatingRoom(false);
   };
 
-  if (!hasJoined) {
+  if (!hasJoined || !isConnected) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-green-900 p-4">
         <motion.div 
@@ -95,12 +100,26 @@ export const Lobby: React.FC = () => {
             />
             <button
               onClick={handleConnect}
-              disabled={!name}
+              disabled={!name || (socket !== null && !isConnected)}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <Play size={20} />
-              Entrar al Lobby
+              {socket !== null && !isConnected ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  Conectando...
+                </>
+              ) : (
+                <>
+                  <Play size={20} />
+                  Entrar al Lobby
+                </>
+              )}
             </button>
+            {socket !== null && !isConnected && (
+              <p className="text-xs text-red-500 mt-2 font-medium">
+                Intentando conectar con el servidor...
+              </p>
+            )}
           </div>
         </motion.div>
       </div>
